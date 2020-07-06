@@ -1,54 +1,79 @@
-import React from 'react';
-import {useState} from 'react';
-import ReactDOM from 'react-dom';
-import axios from 'axios';
+import React, { useState } from "react";
+import ReactDOM from "react-dom";
+import axios from "axios";
 
 
-function App(){
+const App = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [books, setBooks] = useState({ items: [] });
+  const onInputChange = e => {
+    setSearchTerm(e.target.value);
+  };
 
-const[book,setBook]= useState("book");
-const[result,setResult]= useState([result]);
-const[apiKey,setApiKey]=useState("AIzaSyBgqcC1kGoZgfm_28kWHaIOSCsocOD4Fuc")
+  let API_URL = `https://www.googleapis.com/books/v1/volumes`;
 
-function handleChange(event){
-const book=event.target.value;
+  const fetchBooks = async () => {
+    const result = await axios.get(`${API_URL}?q=${searchTerm}`);
+    setBooks(result.data);
+  };
 
-setBook(book);
-}
-function handleSubmit(event){
-  event.preventDefault();
-  console.log(book);
+  const onSubmitHandler = e => {
+    e.preventDefault();
+    fetchBooks();
+  };
 
-  axios.get("https://www.googleapis.com/books/v1/volumes?q="+book+"&key="+AIzaSyBgqcC1kGoZgfm_28kWHaIOSCsocOD4Fuc,"+",maxResults=40,")
-.then(data=> {
+  const bookAuthors = authors => {
+    if (authors.length <= 2) {
+      authors = authors.join(" and ");
+    } else if (authors.length > 2) {
+      let lastAuthor = " and " + authors.slice(-1);
+      authors.pop();
+      authors = authors.join(", ");
+      authors += lastAuthor;
+    }
+    return authors;
+  };
 
-  console.log(data.data.items);
- setResult(data.data.items);
-})
-,
+  return (
+    <section>
+       <h1>Book Search App </h1>
+      <form onSubmit={onSubmitHandler}>
+        <label>
+          <span>Search for books</span>
+          <input
+            type="search"
+            placeholder="search"
+            value={searchTerm}
+            onChange={onInputChange}
+          />
+          <button id="button" type="submit">Submit</button>
+          
+        </label>
+      </form>
+      <ul>
+        {books.items.map((book, index) => {
+          return (
+            <li key={index}>
+              <div>
+                <img
+                  alt={`${book.volumeInfo.title} book`}
+                  src={`http://books.google.com/books/content?id=${
+                    book.id}&printsec=frontcover&img=1&zoom=1&source=gbs_api`}
+                />
+                <div>
+                  <h3>{book.volumeInfo.title}</h3>
+                  <p>{bookAuthors(book.volumeInfo.authors)}</p>
+                  <p>{book.volumeInfo.publishedDate}</p>
+                </div>
+              </div>
+              <hr />
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+};
 
-
-return(
-  <div class="container">
-    <h1>Book Search</h1>
-    <form OnSubmit={handleSubmit}>
-      <div class= "form-group">
-         <input 
-         type= "text" onChange={handleChange}
-         className="form-control mt-10" 
-         placeholder="Search for books" 
-         autoCompete="off"/>
-</div>
-<button type ="submit" className="btn btn-danger">Search</button>
-    </form>
-    {result.map(book) => (
-      <img src={book.volumeInfo.imageLinks.thumbnail} alt ={book.title} />img
-    )
-    </div>
-);    
-
-}
-
-const rootElement = document.getElementbyId ("root");
-ReactDOM.Render(<App/>, rootElement);
-}
+const rootElement = document.getElementById("root");
+ReactDOM.render(<App />, rootElement);
